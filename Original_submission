@@ -1,0 +1,141 @@
+'''
+Created on Apr 28 to May 2, 2022
+
+@author: Jim Lakis
+'''
+
+import pandas as pd
+import itertools
+import sys
+import timeit
+import statistics
+
+
+class ConcatCopyOfDfs1:
+    ''' Creation of a larger DataFrame (df) by concatenating copies of an original df
+    to the bottom of previous copies.
+    
+    This version utilizes a while loop.
+    '''
+    def __init__(self, df1: pd.DataFrame, number_of_copies: int):
+        self._df1 = df1
+        self._df2 = df1
+        self._number_of_copies = number_of_copies
+    
+    @property
+    def new_df(self):
+        if self._number_of_copies == 1:
+            return self._df1
+        elif self._number_of_copies > 1:
+            counter = 0
+            while counter < self._number_of_copies - 1:
+                self._df1 = pd.concat([self._df1, self._df2], ignore_index=True)
+                counter += 1
+        return self._df1
+    
+    def __str__(self):
+        return f'{self.new_df}'
+
+
+class ConcatCopyOfDfs2:
+    ''' Creation of a larger DataFrame (df) by concatenating copies of an original df
+    to the bottom of previous copies.
+    
+    This version utilizes itertools.count().
+    '''
+    def __init__(self, df1: pd.DataFrame, number_of_copies: int):
+        self._df1 = df1
+        self._df2 = df1
+        self._number_of_copies = number_of_copies
+    
+    @property
+    def new_df(self):
+        if self._number_of_copies == 1:
+            return self._df1
+        elif self._number_of_copies > 1:
+            for i in itertools.count():
+                self._df1 = pd.concat([self._df1, self._df2], ignore_index=True)
+                if i == self._number_of_copies:
+                    break
+        return self._df1
+    
+    def __str__(self):
+        return f'{self.new_df}'
+
+
+def concat_copies_of_df1():
+    df1 = pd.DataFrame({
+        "Region":['North','West','East','South','North','West','East','South'],
+        "Team":['One','One','One','One','Two','Two','Two','Two'],
+        "Squad":['A','B','C','D','E','F','G','H'],
+        "Revenue":[7500,5500,2750,6400,2300,3750,1900,575],
+        "Cost":[5200,5100,4400,5300,1250,1300,2100,50]
+        })
+    number_of_copies = 100
+    mega_df = ConcatCopyOfDfs1(df1, number_of_copies).new_df
+    return mega_df
+
+
+def concat_copies_of_df2():
+    df1 = pd.DataFrame({
+        "Region":['North','West','East','South','North','West','East','South'],
+        "Team":['One','One','One','One','Two','Two','Two','Two'],
+        "Squad":['A','B','C','D','E','F','G','H'],
+        "Revenue":[7500,5500,2750,6400,2300,3750,1900,575],
+        "Cost":[5200,5100,4400,5300,1250,1300,2100,50]
+        })
+    number_of_copies = 100
+    mega_df = ConcatCopyOfDfs1(df1, number_of_copies).new_df
+    return mega_df
+
+
+def main():
+
+    mega_df1 = concat_copies_of_df1()
+    mega_df2 = concat_copies_of_df2()
+        
+    print(f"shape of expanded dataframe: {mega_df1.shape}")
+    print(f'size of expanded dataframe: {sys.getsizeof(mega_df1)/1000000} MB')
+    
+    print('---')
+        
+    print(f"shape of expanded dataframe: {mega_df2.shape}")
+    print(f'size of expanded dataframe: {sys.getsizeof(mega_df2)/1000000} MB')
+
+
+    l1 = []
+    l2 = []
+    
+    for a in itertools.count():
+        my_setup = 'from __main__ import concat_copies_of_df1'
+        my_stmt = 'concat_copies_of_df1()'
+    
+        t1 = timeit.timeit(setup = my_setup, stmt = my_stmt, number = 1)
+        l1.append(t1)
+        if a == 100:
+            break
+
+    for a in itertools.count():
+        my_setup = 'from __main__ import concat_copies_of_df2'
+        my_stmt = 'concat_copies_of_df2()'
+    
+        t2 = timeit.timeit(setup = my_setup, stmt = my_stmt, number = 1)
+        l2.append(t2)
+        if a == 100:
+            break
+        
+
+
+    aver1 = sum(l1) / len(l1)
+    sd1 = statistics.stdev(l1)
+    aver2 = sum(l2) / len(l2)
+    sd2 = statistics.stdev(l2)
+  
+    print(f"seconds taken to produce the expanded dataframe: {round(aver1, 4)}")
+    print(f"SD seconds: {round(sd1, 4)}")
+    print(f"seconds taken to produce the expanded dataframe: {round(aver2, 4)}")
+    print(f"SD seconds: {round(sd2, 4)}")
+
+
+if __name__ == '__main__':
+    main()
